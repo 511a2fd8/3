@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trader's Master Journal</title>
+    <style>
+        :root {
+            --iconic-color: #4CAF50;
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            margin: 0;
+            min-width: 300px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .settings-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .color-picker {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .color-option.selected {
+            border-color: var(--iconic-color);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            background: var(--iconic-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .quote-list {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .quote-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #3a3a3a;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-tag {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Trader's Master Journal</h2>
+        <button onclick="toggleSettings()">⚙️</button>
+    </div>
+
+    <div class="settings-panel" id="settingsPanel">
+        <div class="color-picker">
+            <div class="color-option" style="background: #4CAF50" onclick="setColor('trader')"></div>
+            <div class="color-option" style="background: #2196F3" onclick="setColor('blue')"></div>
+            <div class="color-option" style="background: #9C27B0" onclick="setColor('purple')"></div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="showAddQuoteModal()">Add New Quote</button>
+            <button onclick="showCategoriesModal()">Manage Categories</button>
+            <button onclick="showCookiesInfo()">Cookies Information</button>
+        </div>
+    </div>
+
+    <div class="quote-list" id="quoteList">
+        <!-- Quotes will be loaded here -->
+    </div>
+
+    <div class="controls">
+        <button onclick="showAllQuotes()">Show All Quotes</button>
+        <button onclick="resetToDefault()">Reset to Default</button>
+        <button onclick="window.parent.postMessage('close-embed', '*')">Close</button>
+    </div>
+
+    <script>
+        // Configuration
+        let config = {
+            textSize: 16,
+            colorCategory: 'trader',
+            quotes: []
+        };
+
+        // Initialize
+        function loadConfig() {
+            const saved = localStorage.getItem('traderJournalConfig');
+            if(saved) config = JSON.parse(saved);
+            applyStyles();
+            loadQuotes();
+        }
+
+        function applyStyles() {
+            document.documentElement.style.setProperty('--iconic-color', getCategoryColor());
+            document.body.style.fontSize = `${config.textSize}px`;
+        }
+
+        function getCategoryColor() {
+            const colors = {
+                trader: '#4CAF50',
+                blue: '#2196F3',
+                purple: '#9C27B0'
+            };
+            return colors[config.colorCategory] || '#4CAF50';
+        }
+
+        // Quote Management
+        function showAddQuoteModal() {
+            const quote = prompt('Enter new quote:');
+            if(quote) {
+                config.quotes.push({
+                    text: quote,
+                    category: config.colorCategory,
+                    date: new Date().toLocaleDateString()
+                });
+                saveConfig();
+                loadQuotes();
+            }
+        }
+
+        function loadQuotes() {
+            const container = document.getElementById('quoteList');
+            container.innerHTML = config.quotes.map((quote, index) => `
+                <div class="quote-item">
+                    <div>
+                        <div>${quote.text}</div>
+                        <div class="category-tag" style="background: ${getCategoryColor()}">
+                            ${quote.category}
+                        </div>
+                    </div>
+                    <button onclick="deleteQuote(${index})">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteQuote(index) {
+            config.quotes.splice(index, 1);
+            saveConfig();
+            loadQuotes();
+        }
+
+        // Settings
+        function setColor(category) {
+            config.colorCategory = category;
+            saveConfig();
+            applyStyles();
+        }
+
+        function resetToDefault() {
+            localStorage.removeItem('traderJournalConfig');
+            location.reload();
+        }
+
+        function saveConfig() {
+            localStorage.setItem('traderJournalConfig', JSON.stringify(config));
+        }
+
+        // Initial load
+        loadConfig();
+    </script>
+</body>
+</html>
